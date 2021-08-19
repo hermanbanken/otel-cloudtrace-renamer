@@ -18,10 +18,9 @@ import (
 )
 
 const GoogleCloudServiceKey = "g.co/gae/app/module"
-const serviceName = "example-server"
 
 // TelemetryExporter defines which export to send OpenTelemetry to
-var TelemetryExporter = flag.String("telemetry-exporter", "google", "Set a telemetry exporter. Options are: stdout, google (future: jaeger?)")
+var TelemetryExporter = flag.String("telemetry-exporter", "stdout", "Set a telemetry exporter. Options are: stdout, google (future: jaeger?)")
 
 // StartTelemetry provisions all telemetry settings so that other code can just create/use trace spans
 func StartTelemetry(ctx context.Context, serviceName string) (err error) {
@@ -52,9 +51,11 @@ func StartTelemetry(ctx context.Context, serviceName string) (err error) {
 		if exporterTraces, err = texporter.New(); err != nil {
 			return errors.Wrap(err, "Failed to create google telemetry exporter")
 		}
-		exporterTraces = renamer.CloudTraceAttributeRenamer{exporterTraces}
 	}
 	log.Printf("Sending telemetry to %q", *TelemetryExporter)
+
+	// Install renamer
+	exporterTraces = renamer.CloudTraceAttributeRenamer{exporterTraces}
 
 	// Trace provider
 	tp := sdktrace.NewTracerProvider(
